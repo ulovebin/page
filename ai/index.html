@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>AI图片识别</title>
+    <meta name="application-name" content="AI图片识别" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover"
+    />
+    <link rel="stylesheet" href="./ai.css" />
+
+    <script
+      src="https://unpkg.com/react@latest/umd/react.development.js"
+      crossorigin="anonymous"
+    ></script>
+    <script src="https://unpkg.com/react-dom@latest/umd/react-dom.development.js"></script>
+    <script
+      src="https://unpkg.com/@babel/standalone@latest/babel.min.js"
+      crossorigin="anonymous"
+    ></script>
+    <script src="https://unpkg.com/jquery@3.6.0/dist/jquery.min.js"></script>
+
+    <script src="./lib/spotlight.bundle.js"></script>
+
+
+    <!--  antd Design -->
+    <!-- https://2x.ant.design/docs/react/getting-started-cn?from=msidevs.net -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.js"></script>
+    <script src="https://unpkg.com/antd@3.19.3/dist/antd.min.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/antd/3.19.0/antd.css"
+    />
+    <!-- antd Design End -->
+  </head>
+
+  <body>
+    <div id="example"></div>
+    <script type="text/babel">
+      class Comment extends React.Component {
+        constructor(props) {
+          super(props);
+          this.state = {};
+        }
+        componentDidMount() {
+          console.log("componentdidMount");
+        }
+        onChangeImage(event) {
+          let file = event.target.files || {};
+
+          if (file.length === 0) return;
+
+          let fileInput = file[0]; // 假设你已从文件输入框获取到文件
+          const windowURL = window.URL || window.webkitURL;
+
+          const src = windowURL.createObjectURL(fileInput);
+
+          let formdata = new FormData();
+          formdata.append("file", fileInput);
+          this.setState({
+            showloading: true,
+          });
+
+          fetch("https://app.bitechdevelop.com/ai-checkimage/upload", {
+            method: "POST",
+            body: formdata, // 第三个参数是可选的，用于指定上传时的文件名
+          })
+            .then((response) => {
+              // 处理响应
+              if (!response.ok) {
+                throw new Error("Network response was not ok");
+              }
+              return response.json();
+            })
+            .then((data) => {
+              // 在这里处理解析后的JSON数据
+              console.log("Parsed JSON data:", data);
+              this.setState({
+                aiImage: src,
+                imageResult: data,
+                showloading: false,
+              });
+            })
+            .catch((error) => {
+              // 处理错误
+              console.error("Error:", error);
+              this.setState({
+                showloading: false,
+              });
+            });
+        }
+        render() {
+          let { aiImage, imageResult, visible } = this.state;
+
+          return (
+            <div className="ai-content">
+              {!aiImage ? (
+                <div className="ai-image ai-image-default" onClick={() => {}}>
+                  <img
+                    src={"ai_0.jpg"}
+                    width="100%"
+                    className="lightense"
+                  ></img>
+                </div>
+              ) : (
+                <div>
+                  <div className="ai-image">
+                    <a class="spotlight" href={aiImage}>
+                      <img src={aiImage} style={{ width: "100%" }} />
+                    </a>
+                  </div>
+                  <div className="ai-message">
+                    该图片为AI生成的图片的概率为：
+                    <span style={{ color: "red" }}>
+                      {imageResult && imageResult.probabilities}
+                    </span>
+                  </div>
+                </div>
+              )}
+              <div className="ai-footer">
+                <div className="ai-footer-button">
+                  <div className="ai-camera">
+                    <span><antd.Icon type="camera-o" />&nbsp;</span>
+                    拍照识图
+                    <input
+                      className="ai-camera-input"
+                      type="file"
+                      accept="image/jpeg,image/jpg,image/png"
+                      multiple={false}
+                      capture
+                      onChange={(event) => {
+                        this.onChangeImage(event);
+                      }}
+                    />
+                  </div>
+                  <div className="ai-album">
+                    <span>从相册上传{">"}</span>
+                    <input
+                      className="ai-album-input"
+                      type="file"
+                      accept="image/jpeg,image/jpg,image/png"
+                      multiple={false}
+                      onChange={(event) => {
+                        this.onChangeImage(event);
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        }
+      }
+      ReactDOM.render(<Comment></Comment>, document.getElementById("example"));
+    </script>
+  </body>
+</html>
